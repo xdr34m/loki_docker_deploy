@@ -1,0 +1,58 @@
+# This is a complete configuration to deploy Loki backed by a s3-compatible API
+# like MinIO for storage.
+# Index files will be written locally at /loki/index and, eventually, will be shipped to the storage via tsdb-shipper.
+target: read
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+
+common:
+  ring:
+    kvstore:
+      store: memberlist
+  replication_factor: 1
+  path_prefix: /loki/read/
+#  instance_addr: loki-read
+  compactor_address: http://loki-backend:3100 # needed
+#  scheduler_address: http://loki-backend:3100
+#  frontend_address: http://loki-read:3100
+
+memberlist:
+  join_members: 
+    - loki-write
+    - loki-backend
+
+querier:
+  max_concurrent: 8 # set to double the cpu cores
+
+
+limits_config:
+  max_query_parallelism: 24 # [queriers count] * [max_concurrent] >= [max_query_parallelism]
+  split_queries_by_interval: 15m
+
+
+frontend_worker:
+  match_max_concurrent: true
+
+schema_config:
+  configs:
+  - from: 2020-05-15
+    store: tsdb
+    object_store: s3
+    schema: v13
+    index:
+      prefix: index_
+      period: 24h
+
+query_scheduler:
+  use_scheduler_ring: false
+  
+storage_config:
+ tsdb_shipper:
+   active_index_directory: /loki/index
+   cache_location: /loki/index_cache
+ aws:
+   s3: s3://minioadmin:minioadmin@minio1.:9000/loki
+   s3forcepathstyle: true

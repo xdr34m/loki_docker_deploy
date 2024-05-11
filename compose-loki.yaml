@@ -1,0 +1,78 @@
+version: '3.7'
+
+# Settings and configurations that are common for all containers
+x-minio-common: &minio-common
+  image: quay.io/minio/minio:RELEASE.2024-05-10T01-41-38Z
+  command: server --console-address ":9001" http://minio1/data{1...2}
+  ports:
+    - "9000"
+    - "9001"
+  # environment:
+    # MINIO_ROOT_USER: minioadmin
+    # MINIO_ROOT_PASSWORD: minioadmin
+  healthcheck:
+    test: ["CMD", "mc", "ready", "local"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+
+# starts 4 docker containers running minio server instances.
+# using nginx reverse proxy, load balancing, you can access
+# it through port 9000.
+services:
+  minio1:
+    <<: *minio-common
+    hostname: minio1
+    volumes:
+      - /opt/docker/minio/data1:/data1
+      - /opt/docker/minio/data2:/data2
+
+  loki-read:
+    image: grafana/loki:3.0.0
+    container_name: loki-read
+    expose:
+      - "9095"
+      - "3100"
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - /opt/docker/loki/loki_read:/etc/loki/
+  loki-write:
+    container_name: loki-write
+    image: grafana/loki:3.0.0
+    expose:
+      - "9095"
+      - "3100"
+    ports:
+      - "3200:3100"
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - /opt/docker/loki/loki_write:/etc/loki/
+  loki-backend:
+    container_name: loki-backend
+    image: grafana/loki:3.0.0
+    expose:
+      - "9095"
+      - "3100"
+    ports:
+      - "3300:3100"
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - /opt/docker/loki/loki_backend:/etc/loki/
+  pdc-agent:
+    container_name: pdc-agent
+    image: grafana/pdc-agent:latest
+    command: -token
+      glc_eyJvIjoiMTA1NTkxNCIsIm4iOiJwZGMtanVsaWFua2lyc3RlaW4zNy1kZWZhdWx0LXBkYy1mODNjNDAiLCJrIjoiNzJsQTdpQ3ZXMlUzYzZDOTA2MU9NeEtQIiwibSI6eyJyIjoicHJvZC1ldS13ZXN0LTIifX0=
+      -cluster prod-eu-west-2 -gcloud-hosted-grafana-id 859074
+  alloy:
+    container_name: alloy
+    image: grafana/alloy:latest
+    command: run --server.http.listen-addr=0.0.0.0:12345
+      --storage.path=/var/lib/alloy/data /etc/alloy/config/
+    volumes:
+      - /opt/docker/alloy/config:/etc/alloy/config
+      - /opt/docker/alloy/data:/var/lib/alloy/data
+    ports:
+      - "12345:12345"

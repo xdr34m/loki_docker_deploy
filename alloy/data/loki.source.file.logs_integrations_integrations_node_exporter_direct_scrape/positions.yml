@@ -1,0 +1,10 @@
+positions:
+  ? path: /var/log/dpkg.log
+    labels: '{instance="17a91af40d75", job="integrations/node_exporter"}'
+  : "144137"
+  ? path: /var/log/alternatives.log
+    labels: '{instance="17a91af40d75", job="integrations/node_exporter"}'
+  : "4686"
+  ? path: /var/log/bootstrap.log
+    labels: '{instance="17a91af40d75", job="integrations/node_exporter"}'
+  : "56926"
