@@ -106,8 +106,8 @@ prometheus.remote_write "cloud_write"{
     endpoint {
         url = "https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push"
         basic_auth {
-            username = "1429755"
-            password = "glc_eyJvIjoiMTA1NTkxNCIsIm4iOiJzdGFjay04NTkwNzQtaW50ZWdyYXRpb24tdGVzdCIsImsiOiI4VlBhdmo5U2NRUjJQM1Q4T3U2MEc4NjQiLCJtIjp7InIiOiJwcm9kLWV1LXdlc3QtMiJ9fQ=="
+            username = "XXXXXXX"
+            password = "XXXXXX"
         }
     }
 }
